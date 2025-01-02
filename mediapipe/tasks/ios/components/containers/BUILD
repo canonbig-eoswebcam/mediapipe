@@ -60,3 +60,16 @@ objc_library(
     srcs = ["sources/MPPLandmark.m"],
     hdrs = ["sources/MPPLandmark.h"],
 )
+
+objc_library(
+    name = "MPPConnection",
+    srcs = ["sources/MPPConnection.m"],
+    hdrs = ["sources/MPPConnection.h"],
+)
+
+objc_library(
+    name = "MPPRegionOfInterest",
+    srcs = ["sources/MPPRegionOfInterest.m"],
+    hdrs = ["sources/MPPRegionOfInterest.h"],
+    deps = [":MPPDetection"],
+)

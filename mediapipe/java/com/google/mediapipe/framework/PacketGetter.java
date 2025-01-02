@@ -128,6 +128,16 @@ public final class PacketGetter {
     return ProtoUtil.unpack(result, defaultInstance);
   }
 
+  public static <T extends MessageLite> T getProto(final Packet packet, Parser<T> messageParser) {
+    SerializedMessage result = new SerializedMessage();
+    nativeGetProto(packet.getNativeHandle(), result);
+    try {
+      return messageParser.parseFrom(result.value);
+    } catch (InvalidProtocolBufferException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+
   /**
    * @deprecated {@link #getProto(Packet, MessageLite)} is safer to use in obfuscated builds.
    */
@@ -239,7 +249,7 @@ public final class PacketGetter {
 
   /**
    * Assign the native image buffer array in given ByteBuffer array. It assumes given ByteBuffer
-   * array has the the same size of image list packet, and assumes the output buffer stores pixels
+   * array has the same size of image list packet, and assumes the output buffer stores pixels
    * contiguously. It returns false if this assumption does not hold.
    *
    * <p>If deepCopy is true, it assumes the given buffersArray has allocated the required size of

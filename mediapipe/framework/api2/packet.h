@@ -12,7 +12,9 @@
 
 #include <functional>
 #include <type_traits>
+#include <utility>
 
+#include "absl/log/absl_check.h"
 #include "absl/meta/type_traits.h"
 #include "mediapipe/framework/api2/tuple.h"
 #include "mediapipe/framework/packet.h"
@@ -102,9 +104,9 @@ mediapipe::Packet ToOldPacket(PacketBase&& p);
 
 template <typename T>
 inline const T& PacketBase::Get() const {
-  CHECK(payload_);
+  ABSL_CHECK(payload_);
   packet_internal::Holder<T>* typed_payload = payload_->As<T>();
-  CHECK(typed_payload) << absl::StrCat(
+  ABSL_CHECK(typed_payload) << absl::StrCat(
       "The Packet stores \"", payload_->DebugTypeName(), "\", but \"",
       MediaPipeTypeStringOrDemangled<T>(), "\" was requested.");
   return typed_payload->data();
@@ -134,17 +136,17 @@ namespace internal {
 template <class T>
 inline void CheckCompatibleType(const HolderBase& holder, internal::Wrap<T>) {
   const packet_internal::Holder<T>* typed_payload = holder.As<T>();
-  CHECK(typed_payload) << absl::StrCat(
+  ABSL_CHECK(typed_payload) << absl::StrCat(
       "The Packet stores \"", holder.DebugTypeName(), "\", but \"",
       MediaPipeTypeStringOrDemangled<T>(), "\" was requested.");
-  //  CHECK(payload_->has_type<T>());
+  //  ABSL_CHECK(payload_->has_type<T>());
 }
 
 template <class... T>
 inline void CheckCompatibleType(const HolderBase& holder,
                                 internal::Wrap<OneOf<T...>>) {
   bool compatible = (holder.As<T>() || ...);
-  CHECK(compatible)
+  ABSL_CHECK(compatible)
       << "The Packet stores \"" << holder.DebugTypeName() << "\", but one of "
       << absl::StrJoin(
              {absl::StrCat("\"", MediaPipeTypeStringOrDemangled<T>(), "\"")...},
@@ -165,7 +167,7 @@ template <class V, class... U>
 struct IsCompatibleType<V, OneOf<U...>>
     : std::integral_constant<bool, (std::is_same_v<V, U> || ...)> {};
 
-};  // namespace internal
+}  // namespace internal
 
 template <typename T>
 inline Packet<T> PacketBase::As() const {
@@ -211,9 +213,9 @@ class Packet : public Packet<internal::Generic> {
   Packet<T> At(Timestamp timestamp) &&;
 
   const T& Get() const {
-    CHECK(payload_);
+    ABSL_CHECK(payload_);
     packet_internal::Holder<T>* typed_payload = payload_->As<T>();
-    CHECK(typed_payload);
+    ABSL_CHECK(typed_payload);
     return typed_payload->data();
   }
   const T& operator*() const { return Get(); }
@@ -221,7 +223,7 @@ class Packet : public Packet<internal::Generic> {
 
   template <typename U, typename TT = T>
   std::enable_if_t<!std::is_abstract_v<TT>, TT> GetOr(U&& v) const {
-    return IsEmpty() ? static_cast<T>(absl::forward<U>(v)) : **this;
+    return IsEmpty() ? static_cast<T>(std::forward<U>(v)) : **this;
   }
 
   // Note: Consume is included for compatibility with the old Packet; however,
@@ -259,19 +261,19 @@ struct First {
 
 template <class T>
 struct AddStatus {
-  using type = StatusOr<T>;
+  using type = absl::StatusOr<T>;
 };
 template <class T>
-struct AddStatus<StatusOr<T>> {
-  using type = StatusOr<T>;
+struct AddStatus<absl::StatusOr<T>> {
+  using type = absl::StatusOr<T>;
 };
 template <>
-struct AddStatus<Status> {
-  using type = Status;
+struct AddStatus<absl::Status> {
+  using type = absl::Status;
 };
 template <>
 struct AddStatus<void> {
-  using type = Status;
+  using type = absl::Status;
 };
 
 template <class R, class F, class... A>
@@ -282,7 +284,7 @@ struct CallAndAddStatusImpl {
 };
 template <class F, class... A>
 struct CallAndAddStatusImpl<void, F, A...> {
-  Status operator()(const F& f, A&&... a) {
+  absl::Status operator()(const F& f, A&&... a) {
     f(std::forward<A>(a)...);
     return {};
   }
@@ -330,9 +332,9 @@ class Packet<OneOf<T...>> : public PacketBase {
 
   template <class U, class = AllowedType<U>>
   const U& Get() const {
-    CHECK(payload_);
+    ABSL_CHECK(payload_);
     packet_internal::Holder<U>* typed_payload = payload_->As<U>();
-    CHECK(typed_payload);
+    ABSL_CHECK(typed_payload);
     return typed_payload->data();
   }
 
@@ -343,7 +345,7 @@ class Packet<OneOf<T...>> : public PacketBase {
 
   template <class... F>
   auto Visit(const F&... args) const {
-    CHECK(payload_);
+    ABSL_CHECK(payload_);
     auto f = internal::Overload{args...};
     using FirstT = typename internal::First<T...>::type;
     using ResultType = absl::result_of_t<decltype(f)(const FirstT&)>;
@@ -364,7 +366,7 @@ class Packet<OneOf<T...>> : public PacketBase {
 
   template <class... F>
   auto ConsumeAndVisit(const F&... args) {
-    CHECK(payload_);
+    ABSL_CHECK(payload_);
     auto f = internal::Overload{args...};
     using FirstT = typename internal::First<T...>::type;
     using VisitorResultType =

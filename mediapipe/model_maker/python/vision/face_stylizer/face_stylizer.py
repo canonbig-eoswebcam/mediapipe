@@ -13,7 +13,10 @@
 # limitations under the License.
 """APIs to train face stylization model."""
 
-from typing import Callable, Optional
+import logging
+import os
+from typing import Any, Callable, Optional
+import zipfile
 
 import numpy as np
 import tensorflow as tf
@@ -27,6 +30,16 @@ from mediapipe.model_maker.python.vision.face_stylizer import face_stylizer_opti
 from mediapipe.model_maker.python.vision.face_stylizer import hyperparameters as hp
 from mediapipe.model_maker.python.vision.face_stylizer import model_options as model_opt
 from mediapipe.model_maker.python.vision.face_stylizer import model_spec as ms
+from mediapipe.tasks.python.metadata.metadata_writers import face_stylizer as metadata_writer
+
+# Face detector model and face landmarks detector file names.
+_FACE_DETECTOR_MODEL = 'face_detector.tflite'
+_FACE_LANDMARKS_DETECTOR_MODEL = 'face_landmarks_detector.tflite'
+
+# The mean value used in the input tensor normalization for the face stylizer
+# model.
+_NORM_MEAN = 0.0
+_NORM_STD = 255.0
 
 
 class FaceStylizer(object):
@@ -53,7 +66,6 @@ class FaceStylizer(object):
     self._model_spec = model_spec
     self._model_options = model_options
     self._hparams = hparams
-    # TODO: Support face alignment in image preprocessor.
     self._preprocessor = image_preprocessing.Preprocessor(
         input_shape=self._model_spec.input_image_shape,
         num_classes=1,
@@ -92,6 +104,37 @@ class FaceStylizer(object):
     face_stylizer._create_and_train_model(train_data)
     return face_stylizer
 
+  def stylize(
+      self, data: classification_ds.ClassificationDataset
+  ) -> classification_ds.ClassificationDataset:
+    """Stylizes the images represented by the input dataset.
+
+    Args:
+      data: Dataset of input images, can contain multiple images.
+
+    Returns:
+      A dataset contains the stylized images
+    """
+    input_dataset = data.gen_tf_dataset(preprocess=self._preprocessor)
+    output_img_list = []
+    for sample in input_dataset:
+      image = sample[0]
+      w = self._encoder(image, training=True)
+      x = self._decoder({'inputs': w + self.w_avg}, training=True)
+      output_batch = x['image'][-1]
+      output_img_tensor = (tf.squeeze(output_batch).numpy() + 1.0) * 127.5
+      output_img_list.append(output_img_tensor)
+
+    image_ds = tf.data.Dataset.from_tensor_slices(output_img_list)
+
+    logging.info('Stylized %s images.', len(output_img_list))
+
+    return classification_ds.ClassificationDataset(
+        dataset=image_ds,
+        label_names=['stylized'],
+        size=len(output_img_list),
+    )
+
   def _create_and_train_model(
       self, train_data: classification_ds.ClassificationDataset
   ):
@@ -104,7 +147,7 @@ class FaceStylizer(object):
     self._train_model(train_data=train_data, preprocessor=self._preprocessor)
 
   def _create_model(self):
-    """Creates the componenets of face stylizer."""
+    """Creates the components of face stylizer."""
     self._encoder = model_util.load_keras_model(
         constants.FACE_STYLIZER_ENCODER_MODEL_FILES.get_path()
     )
@@ -127,7 +170,7 @@ class FaceStylizer(object):
   def _train_model(
       self,
       train_data: classification_ds.ClassificationDataset,
-      preprocessor: Optional[Callable[..., bool]] = None,
+      preprocessor: Optional[Callable[..., Any]] = None,
   ):
     """Trains the face stylizer model.
 
@@ -137,7 +180,7 @@ class FaceStylizer(object):
     """
     train_dataset = train_data.gen_tf_dataset(preprocess=preprocessor)
 
-    # TODO: Support processing mulitple input style images. The
+    # TODO: Support processing multiple input style images. The
     # input style images are expected to have similar style.
     # style_sample represents a tuple of (style_image, style_label).
     style_sample = next(iter(train_dataset))
@@ -146,7 +189,7 @@ class FaceStylizer(object):
     batch_size = self._hparams.batch_size
     label_in = tf.zeros(shape=[batch_size, 0])
 
-    style_encoding = self._encoder(style_img)
+    style_encoding = self._encoder(style_img, training=True) + self.w_avg
 
     optimizer = tf.keras.optimizers.Adam(
         learning_rate=self._hparams.learning_rate,
@@ -176,10 +219,7 @@ class FaceStylizer(object):
         )
 
       with tf.GradientTape() as tape:
-        outputs = self._decoder(
-            {'inputs': in_latent + self.w_avg},
-            training=False,
-        )
+        outputs = self._decoder({'inputs': in_latent.numpy()}, training=True)
         gen_img = outputs['image'][-1]
 
         real_feature = self._discriminator(
@@ -194,8 +234,84 @@ class FaceStylizer(object):
             tf.keras.losses.MeanAbsoluteError()(real_feature, gen_feature)
             * self._model_options.adv_loss_weight
         )
-        tf.compat.v1.logging.info(f'Iteration {i} loss: {style_loss.numpy()}')
+        print(f'Iteration {i} loss: {style_loss.numpy()}')
 
         tvars = self._decoder.trainable_variables
         grads = tape.gradient(style_loss, tvars)
         optimizer.apply_gradients(list(zip(grads, tvars)))
+
+  def export_model(self, model_name: str = 'face_stylizer.task'):
+    """Converts the model to TFLite and exports as a model bundle file.
+
+    Saves a model bundle file and metadata json file to hparams.export_dir. The
+    resulting model bundle file will contain necessary models for face
+    detection, face landmarks detection, and customized face stylization. Only
+    the model bundle file is needed for the downstream face stylization task.
+    The metadata.json file is saved only to interpret the contents of the model
+    bundle file. The face detection model and face landmarks detection model are
+    from https://storage.googleapis.com/mediapipe-assets/face_landmarker_v2.task
+    and the customized face stylization model is trained in this library.
+
+    Args:
+      model_name: Face stylizer model bundle file name. The full export path is
+        {self._hparams.export_dir}/{model_name}.
+    """
+    if not tf.io.gfile.exists(self._hparams.export_dir):
+      tf.io.gfile.makedirs(self._hparams.export_dir)
+    model_bundle_file = os.path.join(self._hparams.export_dir, model_name)
+    metadata_file = os.path.join(self._hparams.export_dir, 'metadata.json')
+
+    # Create an end-to-end model by concatenating encoder and decoder
+    inputs = tf.keras.Input(shape=(256, 256, 3))
+    x = self._encoder(inputs, training=True)
+    x = self._decoder({'inputs': x + self.w_avg}, training=True)
+    x = x['image'][-1]
+    # Scale the data range from [-1, 1] to [0, 1] to support running inference
+    # on both CPU and GPU.
+    outputs = (x + 1.0) / 2.0
+    model = tf.keras.Model(inputs=inputs, outputs=outputs)
+
+    face_stylizer_model_buffer = model_util.convert_to_tflite(
+        model=model,
+        quantization_config=None,
+        supported_ops=(tf.lite.OpsSet.TFLITE_BUILTINS,),
+        preprocess=self._preprocessor,
+        allow_custom_ops=True,
+    )
+
+    face_aligner_task_file_path = constants.FACE_ALIGNER_TASK_FILES.get_path()
+
+    with zipfile.ZipFile(face_aligner_task_file_path, 'r') as zf:
+      file_list = zf.namelist()
+      if _FACE_DETECTOR_MODEL not in file_list:
+        raise ValueError(
+            '{0} is not packed in face aligner task file'.format(
+                _FACE_DETECTOR_MODEL
+            )
+        )
+      if _FACE_LANDMARKS_DETECTOR_MODEL not in file_list:
+        raise ValueError(
+            '{0} is not packed in face aligner task file'.format(
+                _FACE_LANDMARKS_DETECTOR_MODEL
+            )
+        )
+
+      with zf.open(_FACE_DETECTOR_MODEL) as f:
+        face_detector_model_buffer = f.read()
+
+      with zf.open(_FACE_LANDMARKS_DETECTOR_MODEL) as f:
+        face_landmarks_detector_model_buffer = f.read()
+
+    writer = metadata_writer.MetadataWriter.create(
+        bytearray(face_stylizer_model_buffer),
+        bytearray(face_detector_model_buffer),
+        bytearray(face_landmarks_detector_model_buffer),
+        input_norm_mean=[_NORM_MEAN],
+        input_norm_std=[_NORM_STD],
+    )
+
+    model_bundle_content, metadata_json = writer.populate()
+    with open(model_bundle_file, 'wb') as f:
+      f.write(model_bundle_content)
+    with open(metadata_file, 'w') as f:
+      f.write(metadata_json)

@@ -3,6 +3,7 @@
 #include <tuple>
 #include <utility>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/api2/test_contracts.h"
@@ -529,9 +530,9 @@ struct ConsumerNode : public Node {
   MEDIAPIPE_NODE_CONTRACT(kInt, kGeneric, kOneOf);
 
   absl::Status Process(CalculatorContext* cc) override {
-    ASSIGN_OR_RETURN(auto maybe_int, kInt(cc).Consume());
-    ASSIGN_OR_RETURN(auto maybe_float, kGeneric(cc).Consume<float>());
-    ASSIGN_OR_RETURN(auto maybe_int2, kOneOf(cc).Consume<int>());
+    MP_ASSIGN_OR_RETURN(auto maybe_int, kInt(cc).Consume());
+    MP_ASSIGN_OR_RETURN(auto maybe_float, kGeneric(cc).Consume<float>());
+    MP_ASSIGN_OR_RETURN(auto maybe_int2, kOneOf(cc).Consume<int>());
     return {};
   }
 };
@@ -570,7 +571,7 @@ struct LogSinkNode : public Node {
   MEDIAPIPE_NODE_CONTRACT(kIn);
 
   absl::Status Process(CalculatorContext* cc) override {
-    LOG(INFO) << "LogSinkNode received: " << kIn(cc).Get();
+    ABSL_LOG(INFO) << "LogSinkNode received: " << kIn(cc).Get();
     return {};
   }
 };

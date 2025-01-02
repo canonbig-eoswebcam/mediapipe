@@ -66,6 +66,10 @@ describe('FaceDetector', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    faceDetector.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(faceDetector);
     verifyListenersRegistered(faceDetector);
@@ -187,7 +191,8 @@ describe('FaceDetector', () => {
         categoryName: '',
         displayName: '',
       }],
-      boundingBox: {originX: 0, originY: 0, width: 0, height: 0}
+      boundingBox: {originX: 0, originY: 0, width: 0, height: 0, angle: 0},
+      keypoints: []
     });
   });
 });

@@ -13,11 +13,13 @@
 // limitations under the License.
 
 #include <cmath>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/substitute.h"
@@ -33,7 +35,6 @@
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
@@ -205,7 +206,7 @@ mediapipe::ImageFormat::Format GetImageFormat(int image_channels) {
   } else if (image_channels == 1) {
     return ImageFormat::GRAY8;
   }
-  CHECK(false) << "Unsupported input image channles: " << image_channels;
+  ABSL_CHECK(false) << "Unsupported input image channels: " << image_channels;
 }
 
 Packet MakeImageFramePacket(cv::Mat input) {

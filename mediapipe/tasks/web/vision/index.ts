@@ -17,11 +17,13 @@
 import {FilesetResolver as FilesetResolverImpl} from '../../../tasks/web/core/fileset_resolver';
 import {DrawingUtils as DrawingUtilsImpl} from '../../../tasks/web/vision/core/drawing_utils';
 import {MPImage as MPImageImpl} from '../../../tasks/web/vision/core/image';
+import {MPMask as MPMaskImpl} from '../../../tasks/web/vision/core/mask';
 import {FaceDetector as FaceDetectorImpl} from '../../../tasks/web/vision/face_detector/face_detector';
-import {FaceLandmarker as FaceLandmarkerImpl, FaceLandmarksConnections as FaceLandmarksConnectionsImpl} from '../../../tasks/web/vision/face_landmarker/face_landmarker';
+import {FaceLandmarker as FaceLandmarkerImpl} from '../../../tasks/web/vision/face_landmarker/face_landmarker';
 import {FaceStylizer as FaceStylizerImpl} from '../../../tasks/web/vision/face_stylizer/face_stylizer';
 import {GestureRecognizer as GestureRecognizerImpl} from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer';
 import {HandLandmarker as HandLandmarkerImpl} from '../../../tasks/web/vision/hand_landmarker/hand_landmarker';
+import {HolisticLandmarker as HolisticLandmarkerImpl} from '../../../tasks/web/vision/holistic_landmarker/holistic_landmarker';
 import {ImageClassifier as ImageClassifierImpl} from '../../../tasks/web/vision/image_classifier/image_classifier';
 import {ImageEmbedder as ImageEmbedderImpl} from '../../../tasks/web/vision/image_embedder/image_embedder';
 import {ImageSegmenter as ImageSegementerImpl} from '../../../tasks/web/vision/image_segmenter/image_segmenter';
@@ -34,12 +36,13 @@ import {PoseLandmarker as PoseLandmarkerImpl} from '../../../tasks/web/vision/po
 const DrawingUtils = DrawingUtilsImpl;
 const FilesetResolver = FilesetResolverImpl;
 const MPImage = MPImageImpl;
+const MPMask = MPMaskImpl;
 const FaceDetector = FaceDetectorImpl;
 const FaceLandmarker = FaceLandmarkerImpl;
-const FaceLandmarksConnections = FaceLandmarksConnectionsImpl;
 const FaceStylizer = FaceStylizerImpl;
 const GestureRecognizer = GestureRecognizerImpl;
 const HandLandmarker = HandLandmarkerImpl;
+const HolisticLandmarker = HolisticLandmarkerImpl;
 const ImageClassifier = ImageClassifierImpl;
 const ImageEmbedder = ImageEmbedderImpl;
 const ImageSegmenter = ImageSegementerImpl;
@@ -51,12 +54,13 @@ export {
   DrawingUtils,
   FilesetResolver,
   MPImage,
+  MPMask,
   FaceDetector,
   FaceLandmarker,
-  FaceLandmarksConnections,
   FaceStylizer,
   GestureRecognizer,
   HandLandmarker,
+  HolisticLandmarker,
   ImageClassifier,
   ImageEmbedder,
   ImageSegmenter,

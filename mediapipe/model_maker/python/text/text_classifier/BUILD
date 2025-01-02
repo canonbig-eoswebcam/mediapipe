@@ -12,12 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder for internal Python strict binary and library compatibility macro.
 # Placeholder for internal Python strict test compatibility macro.
 
-package(
-    default_visibility = ["//mediapipe:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe:__subpackages__"])
 
 licenses(["notice"])
 
@@ -32,12 +30,14 @@ py_library(
     srcs = ["__init__.py"],
     visibility = ["//visibility:public"],
     deps = [
+        ":bert_tokenizer",
         ":dataset",
+        ":hyperparameters",
         ":model_options",
         ":model_spec",
+        ":preprocessor",
         ":text_classifier",
         ":text_classifier_options",
-        "//mediapipe/model_maker/python/core:hyperparameters",
     ],
 )
 
@@ -48,11 +48,20 @@ py_library(
 )
 
 py_library(
+    name = "hyperparameters",
+    srcs = ["hyperparameters.py"],
+    deps = [
+        ":bert_tokenizer",
+        "//mediapipe/model_maker/python/core:hyperparameters",
+    ],
+)
+
+py_library(
     name = "model_spec",
     srcs = ["model_spec.py"],
     deps = [
+        ":hyperparameters",
         ":model_options",
-        "//mediapipe/model_maker/python/core:hyperparameters",
         "//mediapipe/model_maker/python/core/utils:file_util",
         "//mediapipe/model_maker/python/text/core:bert_model_spec",
     ],
@@ -63,16 +72,19 @@ py_test(
     srcs = ["model_spec_test.py"],
     tags = ["requires-net:external"],
     deps = [
+        ":hyperparameters",
         ":model_options",
         ":model_spec",
-        "//mediapipe/model_maker/python/core:hyperparameters",
     ],
 )
 
 py_library(
     name = "dataset",
     srcs = ["dataset.py"],
-    deps = ["//mediapipe/model_maker/python/core/data:classification_dataset"],
+    deps = [
+        "//mediapipe/model_maker/python/core/data:cache_files",
+        "//mediapipe/model_maker/python/core/data:classification_dataset",
+    ],
 )
 
 py_test(
@@ -82,9 +94,45 @@ py_test(
 )
 
 py_library(
+    name = "model_with_tokenizer",
+    srcs = ["model_with_tokenizer.py"],
+)
+
+py_test(
+    name = "model_with_tokenizer_test",
+    srcs = ["model_with_tokenizer_test.py"],
+    tags = ["requires-net:external"],
+    deps = [
+        ":bert_tokenizer",
+        ":model_spec",
+        ":model_with_tokenizer",
+        "//mediapipe/model_maker/python/core/utils:hub_loader",
+    ],
+)
+
+py_library(
+    name = "bert_tokenizer",
+    srcs = ["bert_tokenizer.py"],
+)
+
+py_test(
+    name = "bert_tokenizer_test",
+    srcs = ["bert_tokenizer_test.py"],
+    tags = ["requires-net:external"],
+    deps = [
+        ":bert_tokenizer",
+        ":model_spec",
+    ],
+)
+
+py_library(
     name = "preprocessor",
     srcs = ["preprocessor.py"],
-    deps = [":dataset"],
+    deps = [
+        ":bert_tokenizer",
+        ":dataset",
+        "//mediapipe/model_maker/python/core/data:cache_files",
+    ],
 )
 
 py_test(
@@ -92,9 +140,11 @@ py_test(
     srcs = ["preprocessor_test.py"],
     tags = ["requires-net:external"],
     deps = [
+        ":bert_tokenizer",
         ":dataset",
         ":model_spec",
         ":preprocessor",
+        "//mediapipe/model_maker/python/core/data:cache_files",
     ],
 )
 
@@ -102,9 +152,9 @@ py_library(
     name = "text_classifier_options",
     srcs = ["text_classifier_options.py"],
     deps = [
+        ":hyperparameters",
         ":model_options",
         ":model_spec",
-        "//mediapipe/model_maker/python/core:hyperparameters",
     ],
 )
 
@@ -112,14 +162,19 @@ py_library(
     name = "text_classifier",
     srcs = ["text_classifier.py"],
     deps = [
+        ":bert_tokenizer",
         ":dataset",
+        ":hyperparameters",
         ":model_options",
         ":model_spec",
+        ":model_with_tokenizer",
         ":preprocessor",
         ":text_classifier_options",
-        "//mediapipe/model_maker/python/core:hyperparameters",
         "//mediapipe/model_maker/python/core/data:dataset",
         "//mediapipe/model_maker/python/core/tasks:classifier",
+        "//mediapipe/model_maker/python/core/utils:hub_loader",
+        "//mediapipe/model_maker/python/core/utils:loss_functions",
+        "//mediapipe/model_maker/python/core/utils:metrics",
         "//mediapipe/model_maker/python/core/utils:model_util",
         "//mediapipe/model_maker/python/core/utils:quantization",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
@@ -129,7 +184,7 @@ py_library(
 
 py_test(
     name = "text_classifier_test",
-    size = "large",
+    size = "enormous",
     srcs = ["text_classifier_test.py"],
     data = [
         "//mediapipe/model_maker/python/text/text_classifier/testdata",
@@ -142,6 +197,7 @@ py_test(
     ],
     deps = [
         ":text_classifier_import",
+        "//mediapipe/model_maker/python/core/utils:loss_functions",
         "//mediapipe/tasks/python/test:test_utils",
     ],
 )

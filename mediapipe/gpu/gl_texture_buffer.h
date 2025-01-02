@@ -19,6 +19,7 @@
 #define MEDIAPIPE_GPU_GL_TEXTURE_BUFFER_H_
 
 #include <atomic>
+#include <memory>
 
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -91,9 +92,9 @@ class GlTextureBuffer
   // TODO: turn into a single call?
   GLuint name() const { return name_; }
   GLenum target() const { return target_; }
-  int width() const { return width_; }
-  int height() const { return height_; }
-  GpuBufferFormat format() const { return format_; }
+  int width() const override { return width_; }
+  int height() const override { return height_; }
+  GpuBufferFormat format() const override { return format_; }
 
   GlTextureView GetReadView(internal::types<GlTextureView>,
                             int plane) const override;

@@ -138,6 +138,7 @@ cc_library(
     hdrs = ["benchmark.h"],
     deps = [
         "@com_google_benchmark//:benchmark",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -185,6 +186,23 @@ cc_library(
 )
 
 cc_library(
+    name = "gtest_main_no_heapcheck",
+    testonly = 1,
+    hdrs = [
+        "gmock.h",
+        "gtest.h",
+        "gtest-spi.h",
+        "status_matchers.h",
+    ],
+    deps = [
+        ":status_matchers",
+        "//mediapipe/framework/deps:message_matchers",
+        "//mediapipe/framework/deps:status_matchers",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "logging",
     hdrs = [
         "logging.h",
@@ -192,6 +210,7 @@ cc_library(
     deps = [
         "//mediapipe/framework:port",
         "//third_party:glog",
+        "@com_google_absl//absl/strings:has_ostream_operator",
         "@com_google_absl//absl/time",
     ],
 )
@@ -261,8 +280,8 @@ cc_library(
 )
 
 cc_library(
-    name = "opencv_highgui",
-    hdrs = ["opencv_highgui_inc.h"],
+    name = "opencv_photo",
+    hdrs = ["opencv_photo_inc.h"],
     deps = [
         ":opencv_core",
         "//third_party:opencv",
@@ -298,6 +317,15 @@ cc_library(
 )
 
 cc_library(
+    name = "opencv_highgui",
+    hdrs = ["opencv_highgui_inc.h"],
+    deps = [
+        ":opencv_core",
+        "//third_party:opencv",
+    ],
+)
+
+cc_library(
     name = "opencv_videoio",
     hdrs = ["opencv_videoio_inc.h"],
     deps = [
@@ -317,6 +345,7 @@ cc_library(
         ":core_proto",
         ":logging",
         "//mediapipe/framework:port",
+        "@com_google_absl//absl/log:absl_check",
     ],
 )
 

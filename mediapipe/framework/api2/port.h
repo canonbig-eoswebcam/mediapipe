@@ -20,6 +20,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/api2/const_str.h"
@@ -243,8 +244,8 @@ class MultiplePortAccess {
   // container?
   int Count() { return count_; }
   AccessT operator[](int pos) {
-    CHECK_GE(pos, 0);
-    CHECK_LT(pos, count_);
+    ABSL_CHECK_GE(pos, 0);
+    ABSL_CHECK_LT(pos, count_);
     return SinglePortAccess<ValueT>(cc_, &first_[pos]);
   }
 
@@ -576,6 +577,8 @@ class OutputSidePacketAccess {
   void Set(const T& payload) { Set(api2::MakePacket<T>(payload)); }
   void Set(T&& payload) { Set(api2::MakePacket<T>(std::move(payload))); }
 
+  bool IsConnected() const { return output_ != nullptr; }
+
  private:
   OutputSidePacketAccess(OutputSidePacket* output) : output_(output) {}
   OutputSidePacket* output_;
@@ -660,7 +663,7 @@ class InputSidePacketAccess : public Packet<T> {
       : Packet<T>(packet ? FromOldPacket(*packet).template As<T>()
                          : Packet<T>()),
         connected_(packet != nullptr) {}
-  bool connected_;
+  const bool connected_;
 
   friend InputSidePacketAccess<T> internal::SinglePortAccess<T>(
       mediapipe::CalculatorContext*, const mediapipe::Packet*);

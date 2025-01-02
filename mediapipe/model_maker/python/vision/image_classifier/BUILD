@@ -12,14 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder for internal Python strict binary and library compatibility macro.
 # Placeholder for internal Python library rule.
 
 licenses(["notice"])
 
-package(
-    default_visibility = ["//mediapipe:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe:__subpackages__"])
 
 ######################################################################
 # Public target of the MediaPipe Model Maker ImageClassifier APIs.

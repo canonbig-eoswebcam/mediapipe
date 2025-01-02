@@ -18,6 +18,7 @@ import 'jasmine';
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {createLandmarks, createWorldLandmarks} from '../../../../tasks/web/components/processors/landmark_result_test_lib';
 import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph} from '../../../../tasks/web/core/task_runner_test_utils';
+import {MPMask} from '../../../../tasks/web/vision/core/mask';
 import {VisionGraphRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 
 import {PoseLandmarker} from './pose_landmarker';
@@ -44,8 +45,7 @@ class PoseLandmarkerFake extends PoseLandmarker implements MediapipeTasksFake {
     this.attachListenerSpies[0] =
         spyOn(this.graphRunner, 'attachProtoVectorListener')
             .and.callFake((stream, listener) => {
-              expect(stream).toMatch(
-                  /(normalized_landmarks|world_landmarks|auxiliary_landmarks)/);
+              expect(stream).toMatch(/(normalized_landmarks|world_landmarks)/);
               this.listeners.set(stream, listener as PacketListener);
             });
     this.attachListenerSpies[1] =
@@ -79,23 +79,23 @@ describe('PoseLandmarker', () => {
 
   it('initializes graph', async () => {
     verifyGraph(poseLandmarker);
-    expect(poseLandmarker.listeners).toHaveSize(3);
+    expect(poseLandmarker.listeners).toHaveSize(2);
   });
 
   it('reloads graph when settings are changed', async () => {
     await poseLandmarker.setOptions({numPoses: 1});
     verifyGraph(poseLandmarker, [['poseDetectorGraphOptions', 'numPoses'], 1]);
-    expect(poseLandmarker.listeners).toHaveSize(3);
+    expect(poseLandmarker.listeners).toHaveSize(2);
 
     await poseLandmarker.setOptions({numPoses: 5});
     verifyGraph(poseLandmarker, [['poseDetectorGraphOptions', 'numPoses'], 5]);
-    expect(poseLandmarker.listeners).toHaveSize(3);
+    expect(poseLandmarker.listeners).toHaveSize(2);
   });
 
   it('registers listener for segmentation masks', async () => {
-    expect(poseLandmarker.listeners).toHaveSize(3);
+    expect(poseLandmarker.listeners).toHaveSize(2);
     await poseLandmarker.setOptions({outputSegmentationMasks: true});
-    expect(poseLandmarker.listeners).toHaveSize(4);
+    expect(poseLandmarker.listeners).toHaveSize(3);
   });
 
   it('merges options', async () => {
@@ -208,8 +208,6 @@ describe('PoseLandmarker', () => {
           (landmarksProto, 1337);
       poseLandmarker.listeners.get('world_landmarks')!
           (worldLandmarksProto, 1337);
-      poseLandmarker.listeners.get('auxiliary_landmarks')!
-          (landmarksProto, 1337);
       poseLandmarker.listeners.get('segmentation_masks')!(masks, 1337);
     });
 
@@ -221,12 +219,13 @@ describe('PoseLandmarker', () => {
           .toHaveBeenCalledTimes(1);
       expect(poseLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
 
-      expect(result).toEqual({
-        'landmarks': [{'x': 0, 'y': 0, 'z': 0}],
-        'worldLandmarks': [{'x': 0, 'y': 0, 'z': 0}],
-        'auxilaryLandmarks': [{'x': 0, 'y': 0, 'z': 0}],
-        'segmentationMasks': [new Float32Array([0, 1, 2, 3])],
-      });
+      expect(result.landmarks).toEqual([
+        [{'x': 0, 'y': 0, 'z': 0, 'visibility': 0}]
+      ]);
+      expect(result.worldLandmarks).toEqual([
+        [{'x': 0, 'y': 0, 'z': 0, 'visibility': 0}]
+      ]);
+      expect(result.segmentationMasks![0]).toBeInstanceOf(MPMask);
       done();
     });
   });
@@ -241,8 +240,6 @@ describe('PoseLandmarker', () => {
           (landmarksProto, 1337);
       poseLandmarker.listeners.get('world_landmarks')!
           (worldLandmarksProto, 1337);
-      poseLandmarker.listeners.get('auxiliary_landmarks')!
-          (landmarksProto, 1337);
     });
 
     // Invoke the pose landmarker twice
@@ -260,5 +257,94 @@ describe('PoseLandmarker', () => {
     // poses.
     expect(landmarks1).toBeDefined();
     expect(landmarks1).toEqual(landmarks2);
+  });
+
+  it('supports multiple poses', (done) => {
+    const landmarksProto = [
+      createLandmarks(0.1, 0.2, 0.3).serializeBinary(),
+      createLandmarks(0.4, 0.5, 0.6).serializeBinary()
+    ];
+    const worldLandmarksProto = [
+      createWorldLandmarks(1, 2, 3).serializeBinary(),
+      createWorldLandmarks(4, 5, 6).serializeBinary()
+    ];
+
+    poseLandmarker.setOptions({numPoses: 1});
+
+    // Pass the test data to our listener
+    poseLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      poseLandmarker.listeners.get('normalized_landmarks')!
+          (landmarksProto, 1337);
+      poseLandmarker.listeners.get('world_landmarks')!
+          (worldLandmarksProto, 1337);
+    });
+
+    // Invoke the pose landmarker
+    poseLandmarker.detect({} as HTMLImageElement, result => {
+      expect(result.landmarks).toEqual([
+        [{'x': 0.1, 'y': 0.2, 'z': 0.3, 'visibility': 0}],
+        [{'x': 0.4, 'y': 0.5, 'z': 0.6, 'visibility': 0}]
+      ]);
+      expect(result.worldLandmarks).toEqual([
+        [{'x': 1, 'y': 2, 'z': 3, 'visibility': 0}],
+        [{'x': 4, 'y': 5, 'z': 6, 'visibility': 0}]
+      ]);
+      done();
+    });
+  });
+
+  it('invokes listener after masks are available', (done) => {
+    const landmarksProto = [createLandmarks().serializeBinary()];
+    const worldLandmarksProto = [createWorldLandmarks().serializeBinary()];
+    const masks = [
+      {data: new Float32Array([0, 1, 2, 3]), width: 2, height: 2},
+    ];
+    let listenerCalled = false;
+
+
+    poseLandmarker.setOptions({outputSegmentationMasks: true});
+
+    // Pass the test data to our listener
+    poseLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      expect(listenerCalled).toBeFalse();
+      poseLandmarker.listeners.get('normalized_landmarks')!
+          (landmarksProto, 1337);
+      expect(listenerCalled).toBeFalse();
+      poseLandmarker.listeners.get('world_landmarks')!
+          (worldLandmarksProto, 1337);
+      expect(listenerCalled).toBeFalse();
+      expect(listenerCalled).toBeFalse();
+      poseLandmarker.listeners.get('segmentation_masks')!(masks, 1337);
+    });
+
+    // Invoke the pose landmarker
+    poseLandmarker.detect({} as HTMLImageElement, () => {
+      listenerCalled = true;
+      done();
+    });
+  });
+
+  it('returns result', () => {
+    const landmarksProto = [createLandmarks().serializeBinary()];
+    const worldLandmarksProto = [createWorldLandmarks().serializeBinary()];
+
+    // Pass the test data to our listener
+    poseLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      poseLandmarker.listeners.get('normalized_landmarks')!
+          (landmarksProto, 1337);
+      poseLandmarker.listeners.get('world_landmarks')!
+          (worldLandmarksProto, 1337);
+    });
+
+    // Invoke the pose landmarker
+    const result = poseLandmarker.detect({} as HTMLImageElement);
+    expect(poseLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
+    expect(result.landmarks).toEqual([
+      [{'x': 0, 'y': 0, 'z': 0, 'visibility': 0}]
+    ]);
+    expect(result.worldLandmarks).toEqual([
+      [{'x': 0, 'y': 0, 'z': 0, 'visibility': 0}]
+    ]);
+    result.close();
   });
 });

@@ -21,20 +21,18 @@ bazel_skylib_workspace()
 load("@bazel_skylib//lib:versions.bzl", "versions")
 versions.check(minimum_bazel_version = "3.7.2")
 
-# ABSL cpp library lts_2023_01_25.
+# ABSL on 2023-10-18
 http_archive(
     name = "com_google_absl",
-    urls = [
-        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.0.tar.gz",
-    ],
+    urls = ["https://github.com/abseil/abseil-cpp/archive//9687a8ea750bfcddf790372093245a1d041b21a3.tar.gz"],
     patches = [
         "@//third_party:com_google_absl_windows_patch.diff"
     ],
     patch_args = [
         "-p1",
     ],
-    strip_prefix = "abseil-cpp-20230125.0",
-    sha256 = "3ea49a7d97421b88a8c48a0de16c16048e17725c7ec0f1d3ea2683a2a75adc21"
+    strip_prefix = "abseil-cpp-9687a8ea750bfcddf790372093245a1d041b21a3",
+    sha256 = "f841f78243f179326f2a80b719f2887c38fe226d288ecdc46e2aa091e6aa43bc",
 )
 
 http_archive(
@@ -45,14 +43,21 @@ http_archive(
 )
 
 http_archive(
-   name = "rules_foreign_cc",
-   strip_prefix = "rules_foreign_cc-0.1.0",
-   url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.1.0.zip",
+    name = "rules_foreign_cc",
+    sha256 = "2a4d07cd64b0719b39a7c12218a3e507672b82a97b98c6a89d38565894cf7c51",
+    strip_prefix = "rules_foreign_cc-0.9.0",
+    url = "https://github.com/bazelbuild/rules_foreign_cc/archive/refs/tags/0.9.0.tar.gz",
 )
 
-load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
+load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
 
 rules_foreign_cc_dependencies()
+
+http_archive(
+    name = "rules_java",
+    sha256 = "c73336802d0b4882e40770666ad055212df4ea62cfa6edf9cb0f9d29828a0934",
+    url = "https://github.com/bazelbuild/rules_java/releases/download/5.3.5/rules_java-5.3.5.tar.gz",
+)
 
 http_archive(
     name = "com_google_protobuf",
@@ -67,17 +72,40 @@ http_archive(
     ],
 )
 
+http_archive(
+    name = "cpuinfo",
+    sha256 = "a615cac78fad03952cc3e1fd231ce789a8df6e81a5957b64350cb8200364b385",
+    strip_prefix = "cpuinfo-d6860c477c99f1fce9e28eb206891af3c0e1a1d7",
+    urls = [
+        "https://github.com/pytorch/cpuinfo/archive/d6860c477c99f1fce9e28eb206891af3c0e1a1d7.zip"
+    ],
+)
+
+# XNNPACK on 2024-03-27.
+http_archive(
+    name = "XNNPACK",
+    # `curl -L <url> | shasum -a 256`
+    sha256 = "179a680ef85deb5380b850f2551b214e00835c232f5b197dedf7c011a6adf5a6",
+    strip_prefix = "XNNPACK-2fe25b859581a34e77b48b06c640ac1a5a58612e",
+    url = "https://github.com/google/XNNPACK/archive/2fe25b859581a34e77b48b06c640ac1a5a58612e.zip",
+)
+
+# TODO: This is an are indirect depedency. We should factor it out.
+http_archive(
+    name = "pthreadpool",
+    sha256 = "a4cf06de57bfdf8d7b537c61f1c3071bce74e57524fe053e0bbd2332feca7f95",
+    strip_prefix = "pthreadpool-4fe0e1e183925bf8cfa6aae24237e724a96479b8",
+    urls = ["https://github.com/Maratyszcza/pthreadpool/archive/4fe0e1e183925bf8cfa6aae24237e724a96479b8.zip"],
+)
+
 # Load Zlib before initializing TensorFlow and the iOS build rules to guarantee
 # that the target @zlib//:mini_zlib is available
 http_archive(
     name = "zlib",
     build_file = "@//third_party:zlib.BUILD",
-    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
-    strip_prefix = "zlib-1.2.11",
-    urls = [
-        "http://mirror.bazel.build/zlib.net/fossils/zlib-1.2.11.tar.gz",
-        "http://zlib.net/fossils/zlib-1.2.11.tar.gz",  # 2017-01-15
-    ],
+    sha256 = "b3a24de97a8fdbc835b9833169501030b8977031bcb54b3b3ac13740f846ab30",
+    strip_prefix = "zlib-1.2.13",
+    url = "http://zlib.net/fossils/zlib-1.2.13.tar.gz",
     patches = [
         "@//third_party:zlib.diff",
     ],
@@ -156,22 +184,41 @@ http_archive(
 # 2020-08-21
 http_archive(
     name = "com_github_glog_glog",
-    strip_prefix = "glog-0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6",
-    sha256 = "58c9b3b6aaa4dd8b836c0fd8f65d0f941441fb95e27212c5eeb9979cfd3592ab",
+    strip_prefix = "glog-0.6.0",
+    sha256 = "8a83bf982f37bb70825df71a9709fa90ea9f4447fb3c099e1d720a439d88bad6",
     urls = [
-        "https://github.com/google/glog/archive/0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6.zip",
+        "https://github.com/google/glog/archive/v0.6.0.tar.gz",
     ],
 )
 http_archive(
     name = "com_github_glog_glog_no_gflags",
-    strip_prefix = "glog-0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6",
-    sha256 = "58c9b3b6aaa4dd8b836c0fd8f65d0f941441fb95e27212c5eeb9979cfd3592ab",
+    strip_prefix = "glog-0.6.0",
+    sha256 = "8a83bf982f37bb70825df71a9709fa90ea9f4447fb3c099e1d720a439d88bad6",
     build_file = "@//third_party:glog_no_gflags.BUILD",
     urls = [
-        "https://github.com/google/glog/archive/0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6.zip",
+        "https://github.com/google/glog/archive/v0.6.0.tar.gz",
     ],
     patches = [
-        "@//third_party:com_github_glog_glog_9779e5ea6ef59562b030248947f787d1256132ae.diff",
+        "@//third_party:com_github_glog_glog.diff",
+    ],
+    patch_args = [
+        "-p1",
+    ],
+)
+
+# 2023-06-05
+# This version of Glog is required for Windows support, but currently causes
+# crashes on some Android devices.
+http_archive(
+    name = "com_github_glog_glog_windows",
+    strip_prefix = "glog-3a0d4d22c5ae0b9a2216988411cfa6bf860cc372",
+    sha256 = "170d08f80210b82d95563f4723a15095eff1aad1863000e8eeb569c96a98fefb",
+    urls = [
+      "https://github.com/google/glog/archive/3a0d4d22c5ae0b9a2216988411cfa6bf860cc372.zip",
+    ],
+    patches = [
+        "@//third_party:com_github_glog_glog.diff",
+        "@//third_party:com_github_glog_glog_windows_patch.diff",
     ],
     patch_args = [
         "-p1",
@@ -224,19 +271,18 @@ http_archive(
     build_file = "@//third_party:pffft.BUILD",
 )
 
-# sentencepiece
+# Sentencepiece
 http_archive(
     name = "com_google_sentencepiece",
-    strip_prefix = "sentencepiece-1.0.0",
-    sha256 = "c05901f30a1d0ed64cbcf40eba08e48894e1b0e985777217b7c9036cac631346",
+    strip_prefix = "sentencepiece-0.1.96",
+    add_prefix = "sentencepiece",
+    sha256 = "8409b0126ebd62b256c685d5757150cf7fcb2b92a2f2b98efb3f38fc36719754",
     urls = [
-        "https://github.com/google/sentencepiece/archive/1.0.0.zip",
+        "https://github.com/google/sentencepiece/archive/refs/tags/v0.1.96.zip"
     ],
-    patches = [
-        "@//third_party:com_google_sentencepiece_no_gflag_no_gtest.diff",
-    ],
-    patch_args = ["-p1"],
-    repo_mapping = {"@com_google_glog" : "@com_github_glog_glog_no_gflags"},
+    build_file = "@//third_party:sentencepiece.BUILD",
+    patches = ["@//third_party:com_google_sentencepiece.diff"],
+    patch_args = ["-d", "sentencepiece", "-p1"],
 )
 
 http_archive(
@@ -266,10 +312,10 @@ http_archive(
 
 http_archive(
     name = "com_googlesource_code_re2",
-    sha256 = "e06b718c129f4019d6e7aa8b7631bee38d3d450dd980246bfaf493eb7db67868",
-    strip_prefix = "re2-fe4a310131c37f9a7e7f7816fa6ce2a8b27d65a8",
+    sha256 = "ef516fb84824a597c4d5d0d6d330daedb18363b5a99eda87d027e6bdd9cba299",
+    strip_prefix = "re2-03da4fc0857c285e3a26782f6bc8931c4c950df4",
     urls = [
-        "https://github.com/google/re2/archive/fe4a310131c37f9a7e7f7816fa6ce2a8b27d65a8.tar.gz",
+        "https://github.com/google/re2/archive/03da4fc0857c285e3a26782f6bc8931c4c950df4.tar.gz",
     ],
 )
 
@@ -375,6 +421,22 @@ http_archive(
     url = "https://github.com/opencv/opencv/releases/download/3.2.0/opencv-3.2.0-ios-framework.zip",
 )
 
+# Building an opencv.xcframework from the OpenCV 4.5.3 sources is necessary for
+# MediaPipe iOS Task Libraries to be supported on arm64(M1) Macs. An
+# `opencv.xcframework` archive has not been released and it is recommended to
+# build the same from source using a script provided in OpenCV 4.5.0 upwards.
+# OpenCV is fixed to version to 4.5.3 since swift support can only be disabled
+# from 4.5.3 upwards. This is needed to avoid errors when the library is linked
+# in Xcode. Swift support will be added in when the final binary MediaPipe iOS
+# Task libraries are built.
+http_archive(
+    name = "ios_opencv_source",
+    sha256 = "a61e7a4618d353140c857f25843f39b2abe5f451b018aab1604ef0bc34cd23d5",
+    build_file = "@//third_party:opencv_ios_source.BUILD",
+    type = "zip",
+    url = "https://github.com/opencv/opencv/archive/refs/tags/4.5.3.zip",
+)
+
 http_archive(
     name = "stblib",
     strip_prefix = "stb-b42009b3b9d4ca35bc703f5310eedc74f584be58",
@@ -468,18 +530,25 @@ http_archive(
 )
 
 # TensorFlow repo should always go after the other external dependencies.
-# TF on 2023-04-12.
-_TENSORFLOW_GIT_COMMIT = "d712c0c9e24519cc8cd3720279666720d1000eee"
-_TENSORFLOW_SHA256 = "ba98de6ea5f720071246691a1536ecd5e1b1763033e8c82a1e721a06d3dfd4c1"
+# TF on 2024-05-09.
+_TENSORFLOW_GIT_COMMIT = "8038e44ea38bb889095afaaf6ad05e94adaed8d2"
+# curl -L https://github.com/tensorflow/tensorflow/archive/8038e44ea38bb889095afaaf6ad05e94adaed8d2.tar.gz | shasum -a 256
+_TENSORFLOW_SHA256 = "a00c1503a879eb21c349941bbee54aef8d557d7d2ab770e76fb26668d75aa6e0"
 http_archive(
     name = "org_tensorflow",
     urls = [
       "https://github.com/tensorflow/tensorflow/archive/%s.tar.gz" % _TENSORFLOW_GIT_COMMIT,
     ],
     patches = [
-        "@//third_party:org_tensorflow_compatibility_fixes.diff",
+        "@//third_party:org_tensorflow_system_python.diff",
         # Diff is generated with a script, don't update it manually.
         "@//third_party:org_tensorflow_custom_ops.diff",
+        # Works around Bazel issue with objc_library.
+        # See https://github.com/bazelbuild/bazel/issues/19912
+        "@//third_party:org_tensorflow_objc_build_fixes.diff",
+        # Restores scores for text pipelines, which return different results
+        # with subgraph reshaping
+        "@//third_party:org_tensorflow_disable_subgraph_reshaping.diff"
     ],
     patch_args = [
         "-p1",
@@ -596,3 +665,18 @@ http_archive(
     urls = ["https://github.com/halide/Halide/releases/download/v15.0.1/Halide-15.0.1-x86-64-windows-4c63f1befa1063184c5982b11b6a2cc17d4e5815.zip"],
     build_file = "@//third_party:halide.BUILD",
 )
+
+http_archive(
+    name = "pybind11_abseil",
+    sha256 = "0223b647b8cc817336a51e787980ebc299c8d5e64c069829bf34b69d72337449",
+    strip_prefix = "pybind11_abseil-2c4932ed6f6204f1656e245838f4f5eae69d2e29",
+    urls = ["https://github.com/pybind/pybind11_abseil/archive/2c4932ed6f6204f1656e245838f4f5eae69d2e29.tar.gz"],
+)
+
+http_archive(
+    name = "com_github_nlohmann_json",
+    sha256 = "6bea5877b1541d353bd77bdfbdb2696333ae5ed8f9e8cc22df657192218cad91",
+    urls = ["https://github.com/nlohmann/json/releases/download/v3.9.1/include.zip"],
+    build_file = "@//third_party:nlohmann.BUILD",
+)
+

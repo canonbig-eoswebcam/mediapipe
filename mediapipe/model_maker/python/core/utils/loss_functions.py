@@ -59,7 +59,7 @@ class FocalLoss(tf.keras.losses.Loss):
   """
 
   def __init__(self, gamma, class_weight: Optional[Sequence[float]] = None):
-    """Constructor.
+    """Initializes FocalLoss.
 
     Args:
       gamma: Focal loss gamma, as described in class docs.
@@ -115,6 +115,51 @@ class FocalLoss(tf.keras.losses.Loss):
     return tf.reduce_sum(losses) / batch_size
 
 
+class SparseFocalLoss(FocalLoss):
+  """Sparse implementation of Focal Loss.
+
+  This is the same as FocalLoss, except the labels are expected to be class ids
+  instead of 1-hot encoded vectors. See FocalLoss class documentation defined
+  in this same file for more details.
+
+  Example usage:
+  >>> y_true = [1, 2]
+  >>> y_pred = [[0.05, 0.95, 0], [0.1, 0.8, 0.1]]
+  >>> gamma = 2
+  >>> focal_loss = SparseFocalLoss(gamma, 3)
+  >>> focal_loss(y_true, y_pred).numpy()
+  0.9326
+
+  >>> # Calling with 'sample_weight'.
+  >>> focal_loss(y_true, y_pred, sample_weight=tf.constant([0.3, 0.7])).numpy()
+  0.6528
+  """
+
+  def __init__(
+      self, gamma, num_classes, class_weight: Optional[Sequence[float]] = None
+  ):
+    """Initializes SparseFocalLoss.
+
+    Args:
+      gamma: Focal loss gamma, as described in class docs.
+      num_classes: Number of classes.
+      class_weight: A weight to apply to the loss, one for each class. The
+        weight is applied for each input where the ground truth label matches.
+    """
+    super().__init__(gamma, class_weight=class_weight)
+    self._num_classes = num_classes
+
+  def __call__(
+      self,
+      y_true: tf.Tensor,
+      y_pred: tf.Tensor,
+      sample_weight: Optional[tf.Tensor] = None,
+  ) -> tf.Tensor:
+    y_true = tf.cast(tf.reshape(y_true, [-1]), tf.int32)
+    y_true_one_hot = tf.one_hot(y_true, self._num_classes)
+    return super().__call__(y_true_one_hot, y_pred, sample_weight=sample_weight)
+
+
 @dataclasses.dataclass
 class PerceptualLossWeight:
   """The weight for each perceptual loss.
@@ -144,6 +189,7 @@ class ImagePerceptualQualityLoss(tf.keras.losses.Loss):
     """Initializes ImagePerceptualQualityLoss."""
     self._loss_weight = loss_weight
     self._losses = {}
+    self._vgg_loss = VGGPerceptualLoss(self._loss_weight)
     self._reduction = reduction
 
   def _l1_loss(
@@ -164,7 +210,7 @@ class ImagePerceptualQualityLoss(tf.keras.losses.Loss):
       self._loss_weight = PerceptualLossWeight()
 
     if self._loss_weight.content > 0 or self._loss_weight.style > 0:
-      vgg_loss = VGGPerceptualLoss(self._loss_weight)(img1, img2)
+      vgg_loss = self._vgg_loss(img1, img2)
       vgg_loss_value = tf.math.add_n(vgg_loss.values())
       loss_value.append(vgg_loss_value)
     if self._loss_weight.l1 > 0:
@@ -186,7 +232,7 @@ class PerceptualLoss(tf.keras.Model, metaclass=abc.ABCMeta):
     """Instantiates perceptual loss.
 
     Args:
-      feature_weight: The weight coeffcients of multiple model extracted
+      feature_weight: The weight coefficients of multiple model extracted
         features used for calculating the perceptual loss.
       loss_weight: The weight coefficients between `style_loss` and
         `content_loss`.

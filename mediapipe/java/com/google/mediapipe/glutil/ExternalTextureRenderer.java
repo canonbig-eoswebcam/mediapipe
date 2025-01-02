@@ -67,6 +67,7 @@ public class ExternalTextureRenderer {
   private float[] textureTransformMatrix = new float[16];
   private boolean flipY;
   private int rotation = Surface.ROTATION_0;
+  private boolean doExplicitCpuSync = true;
 
   /** Call this to setup the shader program before rendering. */
   public void setup() {
@@ -102,11 +103,19 @@ public class ExternalTextureRenderer {
   }
 
   /**
+   * Configures whether the renderer should do an explicit CPU synchronization using glFinish upon
+   * each {@link #render} call. Defaults to true.
+   */
+  public void setDoExplicitCpuSync(boolean doExplicitCpuSync) {
+    this.doExplicitCpuSync = doExplicitCpuSync;
+  }
+
+  /**
    * Renders the surfaceTexture to the framebuffer with optional vertical flip.
    *
    * <p>Before calling this, {@link #setup} must have been called.
    *
-   * <p>NOTE -} on passed surface texture.
+   * <p>NOTE: Calls {@link SurfaceTexture#updateTexImage()} on passed surface texture.
    */
   public void render(SurfaceTexture surfaceTexture) {
     GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
@@ -150,8 +159,11 @@ public class ExternalTextureRenderer {
     GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
     ShaderUtil.checkGlError("glBindTexture");
 
-    // TODO: add sync and go back to glFlush()
-    GLES20.glFinish();
+    if (doExplicitCpuSync) {
+
+      // TODO: add sync and go back to glFlush()
+      GLES20.glFinish();
+    }
   }
 
   /**

@@ -11,8 +11,10 @@
 #include <vector>
 
 #include "absl/container/btree_map.h"
+#include "absl/log/absl_check.h"
 #include "absl/strings/string_view.h"
 #include "google/protobuf/message_lite.h"
+#include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_contract.h"
@@ -32,7 +34,7 @@ template <class T>
 struct dependent_false : std::false_type {};
 
 template <typename T>
-T& GetWithAutoGrow(std::vector<std::unique_ptr<T>>* vecp, int index) {
+T& GetWithAutoGrow(std::vector<std::unique_ptr<T>>* vecp, size_t index) {
   auto& vec = *vecp;
   if (vec.size() <= index) {
     vec.resize(index + 1);
@@ -109,7 +111,7 @@ class MultiPort : public Single {
       : Single(vec), vec_(*vec) {}
 
   Single operator[](int index) {
-    CHECK_GE(index, 0);
+    ABSL_CHECK_GE(index, 0);
     return Single{&GetWithAutoGrow(&vec_, index)};
   }
 
@@ -127,7 +129,8 @@ class MultiPort : public Single {
 namespace internal_builder {
 
 template <typename T, typename U>
-using AllowCast = std::integral_constant<bool, std::is_same_v<T, AnyType> &&
+using AllowCast = std::integral_constant<bool, (std::is_same_v<T, AnyType> ||
+                                                std::is_same_v<U, AnyType>) &&
                                                    !std::is_same_v<T, U>>;
 
 }  // namespace internal_builder
@@ -193,7 +196,7 @@ class SourceImpl {
   template <typename U,
             typename std::enable_if<AllowConnection<U>{}, int>::type = 0>
   Src& ConnectTo(const Dst<U>& dest) {
-    CHECK(dest.base_.source == nullptr);
+    ABSL_CHECK(dest.base_.source == nullptr);
     dest.base_.source = base_;
     base_->dests_.emplace_back(&dest.base_);
     return *this;
@@ -221,6 +224,16 @@ class SourceImpl {
   template <typename U>
   bool operator!=(const SourceImpl<IsSide, U>& other) {
     return !(*this == other);
+  }
+
+  Src& SetName(const char* name) {
+    base_->name_ = std::string(name);
+    return *this;
+  }
+
+  Src& SetName(absl::string_view name) {
+    base_->name_ = std::string(name);
+    return *this;
   }
 
   Src& SetName(std::string name) {
@@ -319,6 +332,14 @@ using MultiSideDestination = MultiPort<SideDestination<T>>;
 
 class NodeBase {
  public:
+  NodeBase() = default;
+  ~NodeBase() = default;
+  NodeBase(NodeBase&&) = default;
+  NodeBase& operator=(NodeBase&&) = default;
+  // Explicitly delete copies to improve error messages.
+  NodeBase(const NodeBase&) = delete;
+  NodeBase& operator=(const NodeBase&) = delete;
+
   // TODO: right now access to an indexed port is made directly by
   // specifying both a tag and an index. It would be better to represent this
   // as a two-step lookup, first getting a multi-port, and then accessing one
@@ -574,6 +595,14 @@ class PacketGenerator {
 
 class Graph {
  public:
+  Graph() = default;
+  ~Graph() = default;
+  Graph(Graph&&) = default;
+  Graph& operator=(Graph&&) = default;
+  // Explicitly delete copies to improve error messages.
+  Graph(const Graph&) = delete;
+  Graph& operator=(const Graph&) = delete;
+
   void SetType(std::string type) { type_ = std::move(type); }
 
   // Creates a node of a specific type. Should be used for calculators whose
@@ -711,14 +740,14 @@ class Graph {
       config.set_type(type_);
     }
     FixUnnamedConnections();
-    CHECK_OK(UpdateBoundaryConfig(&config));
+    ABSL_CHECK_OK(UpdateBoundaryConfig(&config));
     for (const std::unique_ptr<NodeBase>& node : nodes_) {
       auto* out_node = config.add_node();
-      CHECK_OK(UpdateNodeConfig(*node, out_node));
+      ABSL_CHECK_OK(UpdateNodeConfig(*node, out_node));
     }
     for (const std::unique_ptr<PacketGenerator>& node : packet_gens_) {
       auto* out_node = config.add_packet_generator();
-      CHECK_OK(UpdateNodeConfig(*node, out_node));
+      ABSL_CHECK_OK(UpdateNodeConfig(*node, out_node));
     }
     return config;
   }
@@ -772,7 +801,7 @@ class Graph {
     config->set_calculator(node.type_);
     node.in_streams_.Visit(
         [&](const TagIndexLocation& loc, const DestinationBase& endpoint) {
-          CHECK(endpoint.source != nullptr);
+          ABSL_CHECK(endpoint.source != nullptr);
           config->add_input_stream(TaggedName(loc, endpoint.source->name_));
         });
     node.out_streams_.Visit(
@@ -781,7 +810,7 @@ class Graph {
         });
     node.in_sides_.Visit([&](const TagIndexLocation& loc,
                              const DestinationBase& endpoint) {
-      CHECK(endpoint.source != nullptr);
+      ABSL_CHECK(endpoint.source != nullptr);
       config->add_input_side_packet(TaggedName(loc, endpoint.source->name_));
     });
     node.out_sides_.Visit(
@@ -802,7 +831,7 @@ class Graph {
     config->set_packet_generator(node.type_);
     node.in_sides_.Visit([&](const TagIndexLocation& loc,
                              const DestinationBase& endpoint) {
-      CHECK(endpoint.source != nullptr);
+      ABSL_CHECK(endpoint.source != nullptr);
       config->add_input_side_packet(TaggedName(loc, endpoint.source->name_));
     });
     node.out_sides_.Visit(
@@ -819,7 +848,7 @@ class Graph {
   absl::Status UpdateBoundaryConfig(CalculatorGraphConfig* config) {
     graph_boundary_.in_streams_.Visit(
         [&](const TagIndexLocation& loc, const DestinationBase& endpoint) {
-          CHECK(endpoint.source != nullptr);
+          ABSL_CHECK(endpoint.source != nullptr);
           config->add_output_stream(TaggedName(loc, endpoint.source->name_));
         });
     graph_boundary_.out_streams_.Visit(
@@ -828,7 +857,7 @@ class Graph {
         });
     graph_boundary_.in_sides_.Visit([&](const TagIndexLocation& loc,
                                         const DestinationBase& endpoint) {
-      CHECK(endpoint.source != nullptr);
+      ABSL_CHECK(endpoint.source != nullptr);
       config->add_output_side_packet(TaggedName(loc, endpoint.source->name_));
     });
     graph_boundary_.out_sides_.Visit(

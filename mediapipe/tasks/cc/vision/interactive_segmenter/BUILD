@@ -22,6 +22,7 @@ cc_library(
     name = "interactive_segmenter",
     srcs = ["interactive_segmenter.cc"],
     hdrs = ["interactive_segmenter.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":interactive_segmenter_graph",
         "//mediapipe/framework:calculator_cc_proto",
@@ -51,6 +52,7 @@ cc_library(
     name = "interactive_segmenter_graph",
     srcs = ["interactive_segmenter_graph.cc"],
     deps = [
+        "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/image:set_alpha_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:flat_color_image_calculator",
@@ -59,6 +61,7 @@ cc_library(
         "//mediapipe/calculators/util:to_image_calculator",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:rect_cc_proto",

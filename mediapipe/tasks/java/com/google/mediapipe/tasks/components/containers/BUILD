@@ -81,9 +81,22 @@ android_library(
 )
 
 android_library(
+    name = "connection",
+    srcs = ["Connection.java"],
+    deps = [
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
     name = "landmark",
     srcs = ["Landmark.java"],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
     deps = [
+        "//mediapipe/framework/formats:landmark_java_proto_lite",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -92,7 +105,11 @@ android_library(
 android_library(
     name = "normalized_landmark",
     srcs = ["NormalizedLandmark.java"],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
     deps = [
+        "//mediapipe/framework/formats:landmark_java_proto_lite",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],

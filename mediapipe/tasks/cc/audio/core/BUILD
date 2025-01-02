@@ -28,6 +28,7 @@ cc_library(
     deps = [
         ":running_mode",
         "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core:base_task_api",
         "//mediapipe/tasks/cc/core:task_runner",
         "@com_google_absl//absl/status",
@@ -43,6 +44,7 @@ cc_library(
         ":base_audio_task_api",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/tasks/cc/core:task_api_factory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",

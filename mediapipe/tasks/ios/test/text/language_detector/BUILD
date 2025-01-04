@@ -33,7 +33,7 @@ objc_library(
     srcs = ["MPPLanguageDetectorTests.mm"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
         "-x objective-c++",
     ],
     data = [

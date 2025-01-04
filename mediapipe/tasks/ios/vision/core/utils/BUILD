@@ -8,7 +8,7 @@ objc_library(
     hdrs = ["sources/MPPImage+Utils.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     module_name = "MPPImageUtils",
     deps = [

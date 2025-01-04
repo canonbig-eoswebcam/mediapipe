@@ -59,7 +59,7 @@ objc_library(
     hdrs = [
         "PoseTrackingViewController.h",
     ],
-    copts = ["-std=c++17"],
+    copts = ["-std=c++20"],
     data = [
         "//mediapipe/graphs/pose_tracking:pose_tracking_gpu.binarypb",
         "//mediapipe/modules/pose_detection:pose_detection.tflite",

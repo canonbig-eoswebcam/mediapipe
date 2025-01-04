@@ -75,9 +75,15 @@ class LegacyCalculatorSupport {
 // included in the header, or some compilers will assume they have no
 // definition.
 template <>
+#ifndef __APPLE__
+    ABSL_CONST_INIT
+#endif
 thread_local CalculatorContext*
     LegacyCalculatorSupport::Scoped<CalculatorContext>::current_;
 template <>
+#ifndef __APPLE__
+    ABSL_CONST_INIT
+#endif
 thread_local CalculatorContract*
     LegacyCalculatorSupport::Scoped<CalculatorContract>::current_;
 #endif

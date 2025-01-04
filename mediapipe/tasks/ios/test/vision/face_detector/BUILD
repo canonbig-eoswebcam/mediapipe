@@ -30,7 +30,7 @@ objc_library(
     srcs = ["MPPFaceDetectorTests.mm"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
         "-x objective-c++",
     ],
     data = [

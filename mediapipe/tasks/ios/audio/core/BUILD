@@ -22,7 +22,7 @@ objc_library(
     hdrs = ["sources/MPPAudioData.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     deps = [
         ":MPPAudioDataFormat",
@@ -53,7 +53,7 @@ objc_library(
     hdrs = ["sources/MPPFloatRingBuffer.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     deps = [
         ":MPPFloatBuffer",
@@ -68,7 +68,7 @@ objc_library(
     hdrs = ["sources/MPPAudioRecord.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     deps = [
         ":MPPAudioDataFormat",
@@ -85,7 +85,7 @@ objc_library(
     hdrs = ["sources/MPPAudioPacketCreator.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     deps = [
         ":MPPAudioData",
@@ -108,7 +108,7 @@ objc_library(
     hdrs = ["sources/MPPAudioTaskRunner.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     deps = [
         ":MPPAudioData",

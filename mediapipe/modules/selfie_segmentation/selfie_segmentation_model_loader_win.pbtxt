@@ -27,7 +27,7 @@ node {
         options: {
           [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
             packet {
-              string_value: "selfie_segmentation.tflite"
+              string_value: "C:\\Program Files\\Canon\\EOS Webcam Utility Pro\\selfie_segmentation.tflite"
             }
           }
         }
@@ -37,7 +37,7 @@ node {
         options: {
           [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
             packet {
-              string_value: "selfie_segmentation_landscape.tflite"
+              string_value: "C:\\Program Files\\Canon\\EOS Webcam Utility Pro\\selfie_segmentation_landscape.tflite"
             }
           }
         }

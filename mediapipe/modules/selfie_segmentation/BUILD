@@ -25,9 +25,18 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "selected_selfie_segmentation_model_loader",
+    srcs = select({
+        "//conditions:default": ["selfie_segmentation_model_loader.pbtxt"],
+        "@platforms//os:macos": ["selfie_segmentation_model_loader_mac.pbtxt"],
+        "@platforms//os:windows": ["selfie_segmentation_model_loader_win.pbtxt"],
+    }),
+)
+
 mediapipe_simple_subgraph(
     name = "selfie_segmentation_model_loader",
-    graph = "selfie_segmentation_model_loader.pbtxt",
+    graph = ":selected_selfie_segmentation_model_loader",
     register_as = "SelfieSegmentationModelLoader",
     deps = [
         "//mediapipe/calculators/core:constant_side_packet_calculator",

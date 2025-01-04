@@ -27,7 +27,7 @@ cc_library(
         "opencv2.framework/Versions/A/Headers/**/*.h*",
     ]),
     copts = [
-        "-std=c++11",
+        "-std=c++20",
         "-x objective-c++",
     ],
     include_prefix = "opencv2",

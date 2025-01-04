@@ -22,7 +22,7 @@ objc_library(
     hdrs = ["sources/MPPCosineSimilarity.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
         "-x objective-c++",
     ],
     deps = [

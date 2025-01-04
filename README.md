@@ -67,14 +67,6 @@ Questions, suggestions, issues, pull requests, etc. are all welcome!
 
 ---
 
-|layout|title|nav_order|
-|-|-|-|
-|default|home|1|
-
-![MediaPipe](https://mediapipe.dev/images/mediapipe_small.png)
-
-----
-
 **Attention:** *We have moved to
 [https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
 as the primary developer documentation site for MediaPipe as of April 3, 2023.*

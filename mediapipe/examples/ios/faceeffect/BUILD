@@ -56,7 +56,7 @@ objc_library(
     hdrs = [
         "FaceEffectViewController.h",
     ],
-    copts = ["-std=c++17"],
+    copts = ["-std=c++20"],
     data = [
         "Base.lproj/LaunchScreen.storyboard",
         "Base.lproj/Main.storyboard",

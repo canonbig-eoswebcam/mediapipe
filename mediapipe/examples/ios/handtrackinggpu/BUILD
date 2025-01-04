@@ -59,7 +59,7 @@ objc_library(
     hdrs = [
         "HandTrackingViewController.h",
     ],
-    copts = ["-std=c++17"],
+    copts = ["-std=c++20"],
     data = [
         "//mediapipe/graphs/hand_tracking:hand_tracking_mobile_gpu.binarypb",
         "//mediapipe/modules/hand_landmark:hand_landmark_full.tflite",

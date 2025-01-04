@@ -43,7 +43,7 @@ objc_library(
     hdrs = ["sources/MPPImageClassifier.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
         "-x objective-c++",
     ],
     module_name = "MPPImageClassifier",

@@ -17,9 +17,15 @@
 namespace mediapipe {
 
 template <>
+#ifndef __APPLE__
+    ABSL_CONST_INIT
+#endif
 thread_local CalculatorContext*
     LegacyCalculatorSupport::Scoped<CalculatorContext>::current_ = nullptr;
 template <>
+#ifndef __APPLE__
+    ABSL_CONST_INIT
+#endif
 thread_local CalculatorContract*
     LegacyCalculatorSupport::Scoped<CalculatorContract>::current_ = nullptr;
 

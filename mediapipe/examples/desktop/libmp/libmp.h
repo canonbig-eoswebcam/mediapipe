@@ -14,7 +14,7 @@
 	#endif
 #else
 // Linux SO
-	#define MP_CPP_EXPORT __attribute__((visibility("default")))  
+	#define MP_CPP_EXPORT __attribute__((visibility("default")))
 	#define MP_CPP_API
 #endif
 
@@ -64,6 +64,8 @@ namespace mediapipe {
 		// Format is the same as that passed to Process() (ImageFormat::SRGB)
 		// Returns true if succeeded; false if failed
 		static bool WriteOutputImage(uint8_t* dst, const void* outputPacketVoid);
+		static bool WriteOutputImage(uint16_t* dst, const void* outputPacketVoid);
+		static bool WriteOutputImage(float* dst, const void* outputPacketVoid);
 
 		// Returns true if packet is empty, false otherwise
 		static bool PacketIsEmpty(const void* outputPacketVoid);

@@ -22,7 +22,7 @@ objc_library(
     hdrs = ["sources/MPPTextTaskRunner.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     deps = [
         "//mediapipe/tasks/ios/core:MPPTaskInfo",

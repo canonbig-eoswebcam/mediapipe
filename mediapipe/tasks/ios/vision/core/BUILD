@@ -22,7 +22,7 @@ objc_library(
     hdrs = ["sources/MPPImage.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     module_name = "MPPImage",
     deps = [
@@ -46,7 +46,7 @@ objc_library(
     hdrs = ["sources/MPPVisionPacketCreator.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     deps = [
         ":MPPImage",
@@ -66,7 +66,7 @@ objc_library(
     hdrs = ["sources/MPPVisionTaskRunner.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     deps = [
         ":MPPImage",
@@ -91,7 +91,7 @@ objc_library(
     hdrs = ["sources/MPPMask.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",

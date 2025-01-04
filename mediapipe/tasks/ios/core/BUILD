@@ -50,7 +50,7 @@ objc_library(
     hdrs = ["sources/MPPTaskInfo.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     deps = [
         ":MPPTaskOptions",
@@ -70,7 +70,7 @@ objc_library(
     hdrs = ["sources/MPPTextPacketCreator.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     deps = [
         "//mediapipe/framework:packet",
@@ -84,7 +84,7 @@ objc_library(
     hdrs = ["sources/MPPTaskRunner.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     deps = [
         ":MPPTaskInfo",
@@ -102,7 +102,7 @@ objc_library(
     hdrs = ["sources/MPPPacketCreator.h"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
     ],
     deps = ["//mediapipe/framework:packet"],
 )

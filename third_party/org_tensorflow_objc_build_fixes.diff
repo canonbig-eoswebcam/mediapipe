@@ -5,7 +5,7 @@ index bd47abe9057..4400a836191 100644
 @@ -74,13 +74,16 @@ cc_library(
      }) + tflite_extra_gles_deps(),
  )
- 
+
 -objc_library(
 +cc_library(
      name = "metal_delegate",
@@ -17,7 +17,7 @@ index bd47abe9057..4400a836191 100644
 -    sdk_frameworks = ["Metal"],
 +    copts = [
 +        "-ObjC++",
-+        "-std=c++17",
++        "-std=c++20",
 +        "-fobjc-arc",
 +    ],
 +    linkopts = ["-framework Metal"],
@@ -30,7 +30,7 @@ index bd47abe9057..4400a836191 100644
      ],
 +    alwayslink = 1,
  )
- 
+
 -objc_library(
 +cc_library(
      name = "metal_delegate_internal",
@@ -39,14 +39,14 @@ index bd47abe9057..4400a836191 100644
 -    sdk_frameworks = ["Metal"],
 +    copts = [
 +         "-ObjC++",
-+         "-std=c++17",
++         "-std=c++20",
 +        "-fobjc-arc",
 +    ],
 +    linkopts = ["-framework Metal"],
      deps = ["//tensorflow/lite/delegates/gpu:metal_delegate"],
 +    alwayslink = 1,
  )
- 
+
  # build -c opt --config android_arm64 --copt -Os --copt -DTFLITE_GPU_BINARY_RELEASE --linkopt -s --strip always :libtensorflowlite_gpu_gl.so
 diff --git a/tensorflow/lite/delegates/gpu/metal/BUILD b/tensorflow/lite/delegates/gpu/metal/BUILD
 index 0c555a4e6b9..f66e51051c9 100644
@@ -55,7 +55,7 @@ index 0c555a4e6b9..f66e51051c9 100644
 @@ -137,14 +137,15 @@ objc_library(
      ],
  )
- 
+
 -objc_library(
 +cc_library(
      name = "inference_context",
@@ -76,7 +76,7 @@ index 0c555a4e6b9..f66e51051c9 100644
      ],
 +    alwayslink = 1,
  )
- 
+
  flatbuffer_cc_library(
 diff --git a/tensorflow/lite/delegates/gpu/metal_delegate.mm b/tensorflow/lite/delegates/gpu/metal_delegate.cc
 similarity index 100%

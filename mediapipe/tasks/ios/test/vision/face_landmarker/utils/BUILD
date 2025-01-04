@@ -30,7 +30,7 @@ objc_library(
     srcs = ["sources/MPPFaceLandmarkerResult+HelpersTests.mm"],
     copts = [
         "-ObjC++",
-        "-std=c++17",
+        "-std=c++20",
         "-x objective-c++",
     ],
     deps = [

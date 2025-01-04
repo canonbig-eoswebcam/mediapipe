@@ -4,7 +4,7 @@
 
 namespace mediapipe {
 
-	MP_CPP_EXPORT LibMP* LibMP::Create(const char* graph, const char* inputStream) 
+	MP_CPP_EXPORT LibMP* LibMP::Create(const char* graph, const char* inputStream)
 	{
 		LibMPImpl* libMP = new LibMPImpl();
 		absl::Status status = libMP->Init(graph, inputStream);
@@ -34,6 +34,26 @@ namespace mediapipe {
 		return true;
 	}
 
+	MP_CPP_EXPORT bool LibMP::WriteOutputImage(uint16_t* dst, const void* outputPacketVoid){
+		auto outputPacket = reinterpret_cast<const mediapipe::Packet*>(outputPacketVoid);
+
+		const ImageFrame &output_frame = outputPacket->Get<mediapipe::ImageFrame>();
+		size_t output_bytes = output_frame.PixelDataSizeStoredContiguously();
+
+		output_frame.CopyToBuffer(dst, output_bytes);
+		return true;
+	}
+
+	MP_CPP_EXPORT bool LibMP::WriteOutputImage(float* dst, const void* outputPacketVoid){
+		auto outputPacket = reinterpret_cast<const mediapipe::Packet*>(outputPacketVoid);
+
+		const ImageFrame &output_frame = outputPacket->Get<mediapipe::ImageFrame>();
+		size_t output_bytes = output_frame.PixelDataSizeStoredContiguously();
+
+		output_frame.CopyToBuffer(dst, output_bytes);
+		return true;
+	}
+
 	MP_CPP_EXPORT bool LibMP::PacketIsEmpty(const void* outputPacketVoid){
 		auto outputPacket = reinterpret_cast<const mediapipe::Packet*>(outputPacketVoid);
 		return outputPacket->IsEmpty();
@@ -46,7 +66,7 @@ namespace mediapipe {
 	MP_CPP_EXPORT const void* LibMP::GetPacketProtoMsgAt(const void* outputPacketVoid, unsigned int idx){
 		auto outputPacket = reinterpret_cast<const mediapipe::Packet*>(outputPacketVoid);
 		absl::StatusOr<std::vector<const google::protobuf::MessageLite*>> statusOrVec = outputPacket->GetVectorOfProtoMessageLitePtrs();
-		if (!statusOrVec.ok()){ 
+		if (!statusOrVec.ok()){
 			return nullptr;
 		}
 		return reinterpret_cast<const void*>(statusOrVec.value()[idx]);

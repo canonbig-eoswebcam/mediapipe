@@ -22,18 +22,18 @@ config_setting(
 # All paths below are relative to the path defined in /WORKSPACE for "windows_opencv"
 # By default this path is C:\opencv\build (double \), but you can change this if necessary.
 
-OPENCV_VERSION = "460"  # 4.6.0
+OPENCV_VERSION = "4100"  # 4.10.0
 
 cc_library(
     name = "opencv",
     srcs = select({
         ":opt_build": [
-            "x64/vc15/lib/opencv_world" + OPENCV_VERSION + ".lib",
-            "x64/vc15/bin/opencv_world" + OPENCV_VERSION + ".dll",
+            "x64/vc17/lib/opencv_world" + OPENCV_VERSION + ".lib",
+            "x64/vc17/bin/opencv_world" + OPENCV_VERSION + ".dll",
         ],
         ":dbg_build": [
-            "x64/vc15/lib/opencv_world" + OPENCV_VERSION + "d.lib",
-            "x64/vc15/bin/opencv_world" + OPENCV_VERSION + "d.dll",
+            "x64/vc17/lib/opencv_world" + OPENCV_VERSION + "d.lib",
+            "x64/vc17/bin/opencv_world" + OPENCV_VERSION + "d.dll",
         ],
     }),
     hdrs = glob(["include/opencv2/**/*.h*"]),

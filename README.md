@@ -19,16 +19,29 @@ Enormous thanks to [@asprecic](https://github.com/asprecic) for sharing [`libexa
     - `/WORKSPACE` (search for "linux_opencv")
 ### Windows
 - **NOTE:** If using Visual Studio, please use VS 2022 17.6 or above. There is a bug in VS 2022 17.4 and 17.5 that causes MediaPipe to fail to link/compile. See rajkundu/mediapipe#1 for more details.
+- Python
+    - Install it and edit PATH
+    - Install NumPy
 - Bazel
+    - Install Bazelisk (Bazel wrapper) via Chocolatey
+    `choco install bazelisk`
 - OpenCV
     - Download pre-compiled binaries
         - Visit https://sourceforge.net/projects/opencvlibrary/files
-        - Click on folder of desired OpenCV version (e.g., 4.6.0)
-        - Download and run the installer `.exe` (e.g., `opencv-4.6.0-vc14_vc15.exe`)
+        - Click on folder of desired OpenCV version (e.g., 4.10.0)
+        - Download and run the installer `.exe`
     - Alternatively, build from source
-- By default, this repository's Bazel build files expect OpenCV to be version `4.6.0` and installed at `C:\opencv`. To match build settings to your own OpenCV version and path, modify the following Bazel files:
+- By default, this repository's Bazel build files expect OpenCV to be version `4.10.0` and installed at `../libcv/libcv`. To match build settings to your own OpenCV version and path, modify the following Bazel files:
     - `/third_party/opencv_windows.BUILD` (search for "OPENCV_VERSION")
     - `/WORKSPACE` (search for "windows_opencv")
+- MSYS2
+    - Install and edit PATH (if MSYS2 is installed to `C:\msys64`, add `C:\msys64\usr\bin` to PATH)
+    - Add `BAZEL_SH` environment variable (e.g. `BAZEL_SH=C:\msys64\usr\bin\bash.exe`)
+    - Run the following commands in MSYS2 (several variations are installed, I used `MSYS2 MSYS`)
+        - `Pacman –Syu`
+        - `pacman -S git patch unzip`
+- Install Visual C++ Build Tools 2022 from https://visualstudio.microsoft.com/visual-cpp-build-tools/
+- Install WinSDK from Visual Studio Installer
 
 
 ## Building
@@ -37,7 +50,7 @@ Enormous thanks to [@asprecic](https://github.com/asprecic) for sharing [`libexa
 2. Run `bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/libmp:libmp.so`
 ### Windows
 1. `git clone` this repository and `cd` into it
-2. Run `build_libmp_win.sh` (Bash) or `build_libmp_win.bat` (CMD, Powershell)
+2. Run `build_libmp_win.bat` (CMD, Powershell)
     - Edit the Bazel-related environmental variables defined by the script(s) as necessary
     - Bazel requires a Python executable with access to NumPy
       - E.g., create a new conda environment, run `conda install numpy`, then point Bazel to the environment's Python executable
